@@ -29,6 +29,7 @@ public:
 	int startPosition;
 
 	void processSample(AudioSampleBuffer&, AudioSampleBuffer&, int, int, int, int);
+	void processSampleReverse(AudioSampleBuffer&, AudioSampleBuffer&, int, int, int, int);
 	
 
 private:

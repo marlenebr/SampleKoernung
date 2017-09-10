@@ -41,3 +41,16 @@ void Grain::processSample(AudioSampleBuffer& currentBuffer, AudioSampleBuffer& f
 		}
 }
 
+void Grain::processSampleReverse(AudioSampleBuffer& currentBuffer, AudioSampleBuffer& fileBuffer, int numChannels, int blockNumSamples, int fileNumSamples, int time)
+{
+	for (int channel = 0; channel < numChannels; ++channel)
+	{
+		float* channelData = currentBuffer.getWritePointer(channel);
+		const float* fileData = fileBuffer.getReadPointer(channel%fileBuffer.getNumChannels());
+
+		int position = (time - onset) + startPosition;
+
+		channelData[blockNumSamples-(time % blockNumSamples)] = fileData[position % fileNumSamples];
+	}
+}
+

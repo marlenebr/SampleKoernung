@@ -37,6 +37,12 @@ GranularSynthesisAudioProcessor::GranularSynthesisAudioProcessor()
 
 	Grain grain = *new Grain(88200, 44100, 0);
 	grains.add(Grain(88200, 44100, 0));
+	grains.add(Grain(98200, 88100, 0));
+	grains.add(Grain(128200, 5100, 0));
+	grains.add(Grain(238200, 124100, 0));
+	grains.add(Grain(58200, 42100, 0));
+
+
 	//localGrains = *new Array<Grain> grains; //Copying Grain-array
 
 
@@ -194,9 +200,11 @@ void GranularSynthesisAudioProcessor::processBlock(AudioSampleBuffer& buffer, Mi
 	for (int sample = 0; sample < outputSamplesRemaining; ++sample)
 	{
 		//grain.processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), outputSamplesRemaining, numSamplesInFile, time);
-		if (grains[0].onset < time) {
-			if (time < (grains[0].onset + grains[0].length)) {
-				grains[0].processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), outputSamplesRemaining, numSamplesInFile, time);
+		for (int i = 0; i < localGrains.size(); ++i) {
+			if (grains[i].onset < time) {
+				if (time < (grains[i].onset + grains[i].length)) {
+					grains[i].processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), outputSamplesRemaining, numSamplesInFile, time);
+				}
 			}
 		}
 		++time;
