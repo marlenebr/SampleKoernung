@@ -19,14 +19,26 @@ class Grain
 
 public:
 
-	Grain(int, int, int);
+	Grain(long long int, int, int, float, float, float, float, float);
 	Grain();
 	~Grain();
 
 
-	int onset;
-	int length;
-	int startPosition;
+	const long long int onset;
+	const int length;
+	const int startPosition;
+
+	const float envAttack, envAttackRecip;
+	const float envRelease, envReleaseRecip;
+	const float envCurve;
+	const float lengthRecip;
+
+	const float rate;
+	const float amp;
+
+
+	inline float cubicinterp(float, float, float, float, float);
+	float envelope(int);
 
 	void processSample(AudioSampleBuffer&, AudioSampleBuffer&, int, int, int, int);
 	void processSampleReverse(AudioSampleBuffer&, AudioSampleBuffer&, int, int, int, int);

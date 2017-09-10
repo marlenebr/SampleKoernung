@@ -23,9 +23,19 @@ GranularSynthesisAudioProcessor::GranularSynthesisAudioProcessor()
                       #endif
                        .withOutput ("Output", AudioChannelSet::stereo(), true)
                      #endif
-	 ), Thread("AudioThread1")
+	 ), Thread("AudioThread1"), 
+		envMidParam(nullptr),
+		envSustainParam(nullptr),
+		envCurveParam(nullptr)
 #endif
 {
+	//Parameter
+	addParameter(envMidParam = new AudioParameterFloat("envCenter", "Envelope Center", 0.0f, 1.0f, 0.5f));
+	addParameter(envSustainParam = new AudioParameterFloat("envSustain", "Envelope Sustain", 0.0f, 1.0f, 0.5f));
+	addParameter(envCurveParam = new AudioParameterFloat("envCurve", "Envelope Curve", NormalisableRange<float>(-12, 12, 0.01, 1), 0.0f));
+
+
+
 	String path = "C:\\000Daten\\eigene_samples\\2017\\08\\2sectest.wav";
 	filePosition = 0;
 	formatManager.registerBasicFormats();
@@ -35,12 +45,12 @@ GranularSynthesisAudioProcessor::GranularSynthesisAudioProcessor()
 	sampleRate = 44100;
 	nextGrainOnset = 88200;
 
-	Grain grain = *new Grain(88200, 44100, 0);
-	grains.add(Grain(88200, 44100, 0));
-	grains.add(Grain(98200, 88100, 0));
-	grains.add(Grain(128200, 5100, 0));
-	grains.add(Grain(238200, 124100, 0));
-	grains.add(Grain(58200, 42100, 0));
+	//Grain grain = *new Grain(88200, 441, 0);
+	//grains.add(Grain(88200, 441, 0));
+	//grains.add(Grain(98200, 441, 22000));
+	//grains.add(Grain(128200, 441, 0));
+	//grains.add(Grain(238200, 441, 22000));
+	//grains.add(Grain(58200, 441, 0));
 
 
 	//localGrains = *new Array<Grain> grains; //Copying Grain-array
@@ -165,6 +175,11 @@ void GranularSynthesisAudioProcessor::processBlock(AudioSampleBuffer& buffer, Mi
 	// when they first compile a plugin, but obviously you don't need to keep
 	// this code if your algorithm always overwrites all the output channels.
 
+	const int numSamplesInBlock = buffer.getNumSamples();
+
+	// clear the buffer so we don't get any noise
+	for (int i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i)
+		buffer.clear(i, 0, numSamplesInBlock);
 
 	//Kopie des FileBuffers
 	ReferenceCountedBuffer::Ptr retainedCurrentBuffer(fileBuffer);
@@ -172,53 +187,43 @@ void GranularSynthesisAudioProcessor::processBlock(AudioSampleBuffer& buffer, Mi
 
 	// finally get a AudioSampleBuffer we can use for processing ...von der File
 	AudioSampleBuffer* currentAudioSampleBuffer(retainedCurrentBuffer->getAudioSampleBuffer());
-	int position = retainedCurrentBuffer->position; //0 - 442 --884 usw
-
-	const int numInputChannels = currentAudioSampleBuffer->getNumChannels();
-	const int numOutputChannels = buffer.getNumChannels();
-
-
-	int outputSamplesRemaining = buffer.getNumSamples();
 	const int numSamplesInFile = currentAudioSampleBuffer->getNumSamples();
-	int outputSamplesOffset = 0;
+
+	const Array<Grain> localGrains = grains;
 
 
-
-	int bufferSamplesRemaining = currentAudioSampleBuffer->getNumSamples() - position; //Komplete samplesanzahl von file - bisher vergangene samples
-	int samplesThisTime = jmin(outputSamplesRemaining, bufferSamplesRemaining); //am ende könnten weniger samples drin sein, nimmt den kleineren der beiden werte
-
-	for (int channel = 0; channel < numOutputChannels; ++channel)
-	{
-		buffer.copyFrom(channel,
-			outputSamplesOffset,
-			*currentAudioSampleBuffer,
-			channel % numInputChannels,
-			position,
-			samplesThisTime);
-	}
-
-	for (int sample = 0; sample < outputSamplesRemaining; ++sample)
-	{
-		//grain.processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), outputSamplesRemaining, numSamplesInFile, time);
+	for (int s = 0; s < numSamplesInBlock; ++s) {
 		for (int i = 0; i < localGrains.size(); ++i) {
-			if (grains[i].onset < time) {
-				if (time < (grains[i].onset + grains[i].length)) {
-					grains[i].processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), outputSamplesRemaining, numSamplesInFile, time);
+			if (localGrains[i].onset < time) {
+				if (time < (localGrains[i].onset + localGrains[i].length)) {
+					localGrains[i].processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), numSamplesInBlock, numSamplesInFile, time);
 				}
 			}
 		}
+
+
+	//for (int sample = 0; sample < outputSamplesRemaining; ++sample)
+	//{
+	//	//grain.processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), outputSamplesRemaining, numSamplesInFile, time);
+	//	for (int i = 0; i < localGrains.size(); ++i) {
+	//		if (localGrains[i].onset < time) {
+	//			if (time < (localGrains[i].onset + localGrains[i].length)) {
+	//				localGrains[i].processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), outputSamplesRemaining, numSamplesInFile, time);
+	//			}
+	//		}
+	//	}
 		++time;
 	}
 
-	outputSamplesRemaining -= samplesThisTime;  //0 ausser am ende, dann weniger (den kehrwehrt von outputsampleoffset
-	outputSamplesOffset += samplesThisTime; //442 ausser am ende einmal, dann weniger
-	position += samplesThisTime; //pos + 442 
+	//outputSamplesRemaining -= samplesThisTime;  //0 ausser am ende, dann weniger (den kehrwehrt von outputsampleoffset
+	//outputSamplesOffset += samplesThisTime; //442 ausser am ende einmal, dann weniger
+	//position += samplesThisTime; //pos + 442 
 
-	if (position == currentAudioSampleBuffer->getNumSamples()) //dann ist das ende erreicht
-		position = 0;
-   
+	//if (position == currentAudioSampleBuffer->getNumSamples()) //dann ist das ende erreicht
+	//	position = 0;
+ //  
 
-	retainedCurrentBuffer->position = position; //wiedr auf pos 0 setzen, anfang
+	//retainedCurrentBuffer->position = position; //wiedr auf pos 0 setzen, anfang
 
 
         // ..do something to the data...
@@ -291,8 +296,84 @@ void GranularSynthesisAudioProcessor::run()
 	{
 		checkForBuffersToFree();
 		checkForPathToOpen();
-		wait(500);
+		int dur = 1000;
+
+		// delete grains
+		if (grains.size() > 0) {
+			for (int i = grains.size() - 1; i >= 0; --i) {
+				// check if the grain has ended
+				long long int grainEnd = grains[i].onset + grains[i].length;
+				bool hasEnded = grainEnd < time;
+
+				if (hasEnded) grains.remove(i);
+			}
+		}
+
+		// add grains
+		if (fileBuffer != nullptr) {
+				// initialize nextGrainOnset to lie in the future
+				if (nextGrainOnset == 0) nextGrainOnset = time;
+
+				int numSamples = fileBuffer->getAudioSampleBuffer()->getNumSamples();
+
+
+				float trans = 0.6;
+				trans += 1 + ((Random::getSystemRandom().nextFloat() * 2 - 1));
+
+				float ratio = pow(2.0, trans / 12.0);
+
+				// Duration
+				//float dur = (1 + (Random::getSystemRandom().nextFloat() * 2 - 1));
+				// this mapping introduces some problems check later!
+				//dur *= (1 / ratio);
+
+				int schedDelay = 700;
+				long long int onset = nextGrainOnset + schedDelay;
+
+				// Length
+				float density = (1 + ( (Random::getSystemRandom().nextFloat() * 2 - 1)));
+				int length = density * dur * sampleRate;
+
+				// Position
+				float randPosition =(Random::getSystemRandom().nextFloat() - 0.5);
+				int startPosition = (randPosition) * numSamples;
+				startPosition = wrap(startPosition, 0, numSamples);
+
+				// Envelope
+				float envMid = *envMidParam;
+				float envSus = *envSustainParam;
+				float envCurve = *envCurveParam;
+
+				// Amplitude
+				float amp = 0.5;
+				amp *= 1 + (Random::getSystemRandom().nextFloat() * 2 - 1);
+
+				nextGrainOnset = onset + (dur * sampleRate);
+
+				grains.add(Grain(onset, length, startPosition, envMid, envSus, envCurve, ratio, amp));
+
+				double schedError = ((onset - schedDelay) - time) / sampleRate;
+				dur += schedError;
+
+				wait(dur * 1000);
+			}
+			else 
+			{
+				// there are no held notes so we should reset the value for nextGrainOnset
+				nextGrainOnset = 0;
+				wait(100);
+			}
 	}
+}
+
+int GranularSynthesisAudioProcessor::wrap(int val, const int low, const int high)
+{
+	int range_size = high - low + 1;
+
+	if (val < low)
+		val += range_size * ((low - val) / range_size + 1);
+
+	return low + (val - low) % range_size;
 }
 
 void GranularSynthesisAudioProcessor::checkForBuffersToFree()
