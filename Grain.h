@@ -9,31 +9,32 @@
 */
 
 #pragma once
+#include "../JuceLibraryCode/JuceHeader.h"
+#ifndef GRAIN_H_INCLUDED
+#define GRAIN_H_INCLUDED
 
 
-
-class Grain
+class Grain 
 {
 
 public:
-	Grain() {};
-	~Grain() {};
 
-	void processSample(AudioSampleBuffer& currentBuffer, AudioSampleBuffer& fileBuffer, int numChannels, int blockNumSamples, int fileNumSamples, int time)
-	{
-		for (int channel = 0; channel < numChannels; ++channel)
-		{
-
-			for (int channel = 0; channel < numChannels; ++channel) 
-			{
-				float* channelData = currentBuffer.getWritePointer(channel);
-				const float* fileData = fileBuffer.getReadPointer(channel%fileBuffer.getNumChannels());
-
-				channelData[time%blockNumSamples] += fileData[time%fileNumSamples];
-			}
-		}
+	Grain(int, int, int);
+	Grain();
+	~Grain();
 
 
+	int onset;
+	int length;
+	int startPosition;
 
-	}
+	void processSample(AudioSampleBuffer&, AudioSampleBuffer&, int, int, int, int);
+	
+
+private:
+	//==============================================================================
+	//JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Grain)
 };
+
+
+#endif // GRAIN_H_INCLUDED

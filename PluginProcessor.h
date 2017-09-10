@@ -86,8 +86,13 @@ public:
 	//Granular
 
 	int time;
+	double sampleRate;
+	long long int nextGrainOnset;
 
-	Grain grain;
+	//Array<Grain> grainStack;
+	//Grain grain;
+	Array<Grain> grains;
+	const Array<Grain> localGrains;
 
 
 

@@ -10,6 +10,7 @@
 
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "Grain.h"
 
 
 //==============================================================================
@@ -25,13 +26,23 @@ GranularSynthesisAudioProcessor::GranularSynthesisAudioProcessor()
 	 ), Thread("AudioThread1")
 #endif
 {
-	startThread();
 	String path = "C:\\000Daten\\eigene_samples\\2017\\08\\2sectest.wav";
 	filePosition = 0;
 	formatManager.registerBasicFormats();
 
 	time = 0;
-	grain = *new Grain();
+	//grain = *new Grain(88200, 44100, 0);
+	sampleRate = 44100;
+	nextGrainOnset = 88200;
+
+	Grain grain = *new Grain(88200, 44100, 0);
+	grains.add(Grain(88200, 44100, 0));
+	//localGrains = *new Array<Grain> grains; //Copying Grain-array
+
+
+	startThread();
+
+ //2sec,1sec,0
 
 	loadAudioFile(path);
 
@@ -160,15 +171,12 @@ void GranularSynthesisAudioProcessor::processBlock(AudioSampleBuffer& buffer, Mi
 	const int numInputChannels = currentAudioSampleBuffer->getNumChannels();
 	const int numOutputChannels = buffer.getNumChannels();
 
+
 	int outputSamplesRemaining = buffer.getNumSamples();
 	const int numSamplesInFile = currentAudioSampleBuffer->getNumSamples();
 	int outputSamplesOffset = 0;
 
-	for (int sample = 0; sample < outputSamplesRemaining; ++sample) 
-	{
-		grain.processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), outputSamplesRemaining, numSamplesInFile, time); // [1]
-		++time;
-	}
+
 
 	int bufferSamplesRemaining = currentAudioSampleBuffer->getNumSamples() - position; //Komplete samplesanzahl von file - bisher vergangene samples
 	int samplesThisTime = jmin(outputSamplesRemaining, bufferSamplesRemaining); //am ende könnten weniger samples drin sein, nimmt den kleineren der beiden werte
@@ -181,6 +189,17 @@ void GranularSynthesisAudioProcessor::processBlock(AudioSampleBuffer& buffer, Mi
 			channel % numInputChannels,
 			position,
 			samplesThisTime);
+	}
+
+	for (int sample = 0; sample < outputSamplesRemaining; ++sample)
+	{
+		//grain.processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), outputSamplesRemaining, numSamplesInFile, time);
+		if (grains[0].onset < time) {
+			if (time < (grains[0].onset + grains[0].length)) {
+				grains[0].processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), outputSamplesRemaining, numSamplesInFile, time);
+			}
+		}
+		++time;
 	}
 
 	outputSamplesRemaining -= samplesThisTime;  //0 ausser am ende, dann weniger (den kehrwehrt von outputsampleoffset
