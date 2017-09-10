@@ -29,6 +29,10 @@ GranularSynthesisAudioProcessor::GranularSynthesisAudioProcessor()
 	String path = "C:\\000Daten\\eigene_samples\\2017\\08\\2sectest.wav";
 	filePosition = 0;
 	formatManager.registerBasicFormats();
+
+	time = 0;
+	grain = *new Grain();
+
 	loadAudioFile(path);
 
 }
@@ -132,17 +136,17 @@ bool GranularSynthesisAudioProcessor::isBusesLayoutSupported (const BusesLayout&
 
 
 //Buffer hat alle Channels und ist input welche für den output überschrieben wwird
-void GranularSynthesisAudioProcessor::processBlock (AudioSampleBuffer& buffer, MidiBuffer& midiMessages)
+void GranularSynthesisAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer& midiMessages)
 {
-    const int totalNumInputChannels  = getTotalNumInputChannels();
-    const int totalNumOutputChannels = getTotalNumOutputChannels();
+	const int totalNumInputChannels = getTotalNumInputChannels();
+	const int totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
+	// In case we have more outputs than inputs, this code clears any output
+	// channels that didn't contain input data, (because these aren't
+	// guaranteed to be empty - they may contain garbage).
+	// This is here to avoid people getting screaming feedback
+	// when they first compile a plugin, but obviously you don't need to keep
+	// this code if your algorithm always overwrites all the output channels.
 
 
 	//Kopie des FileBuffers
@@ -157,30 +161,35 @@ void GranularSynthesisAudioProcessor::processBlock (AudioSampleBuffer& buffer, M
 	const int numOutputChannels = buffer.getNumChannels();
 
 	int outputSamplesRemaining = buffer.getNumSamples();
+	const int numSamplesInFile = currentAudioSampleBuffer->getNumSamples();
 	int outputSamplesOffset = 0;
 
-	//while (outputSamplesRemaining > 0) //wenn das bufer ncith null ist
-	//{
-		int bufferSamplesRemaining = currentAudioSampleBuffer->getNumSamples() - position; //Komplete samplesanzahl von file - bisher vergangene samples
-		int samplesThisTime = jmin(outputSamplesRemaining, bufferSamplesRemaining); //am ende könnten weniger sampkes drin sein, nimmt den kleineren der beiden werte
+	for (int sample = 0; sample < outputSamplesRemaining; ++sample) 
+	{
+		grain.processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), outputSamplesRemaining, numSamplesInFile, time); // [1]
+		++time;
+	}
 
-		for (int channel = 0; channel < numOutputChannels; ++channel)
-		{
-			buffer.copyFrom(channel,
-				outputSamplesOffset,
-				*currentAudioSampleBuffer,
-				channel % numInputChannels,
-				position,
-				samplesThisTime);
-		}
+	int bufferSamplesRemaining = currentAudioSampleBuffer->getNumSamples() - position; //Komplete samplesanzahl von file - bisher vergangene samples
+	int samplesThisTime = jmin(outputSamplesRemaining, bufferSamplesRemaining); //am ende könnten weniger samples drin sein, nimmt den kleineren der beiden werte
 
-		outputSamplesRemaining -= samplesThisTime;  //0 ausser am ende, dann weniger (den kehrwehrt von outputsampleoffset
-		outputSamplesOffset += samplesThisTime; //442 ausser am ende einmal, dann weniger
-		position += samplesThisTime; //pos + 442 
+	for (int channel = 0; channel < numOutputChannels; ++channel)
+	{
+		buffer.copyFrom(channel,
+			outputSamplesOffset,
+			*currentAudioSampleBuffer,
+			channel % numInputChannels,
+			position,
+			samplesThisTime);
+	}
 
-		if (position == currentAudioSampleBuffer->getNumSamples()) //dann ist das ende erreicht
-			position = 0;
-	//}
+	outputSamplesRemaining -= samplesThisTime;  //0 ausser am ende, dann weniger (den kehrwehrt von outputsampleoffset
+	outputSamplesOffset += samplesThisTime; //442 ausser am ende einmal, dann weniger
+	position += samplesThisTime; //pos + 442 
+
+	if (position == currentAudioSampleBuffer->getNumSamples()) //dann ist das ende erreicht
+		position = 0;
+   
 
 	retainedCurrentBuffer->position = position; //wiedr auf pos 0 setzen, anfang
 
@@ -248,11 +257,13 @@ void GranularSynthesisAudioProcessor::loadAudioFile(String path)
 
 }
 
+//Update
 void GranularSynthesisAudioProcessor::run()
 {
 	while (!threadShouldExit())
 	{
 		checkForBuffersToFree();
+		checkForPathToOpen();
 		wait(500);
 	}
 }
@@ -265,6 +276,35 @@ void GranularSynthesisAudioProcessor::checkForBuffersToFree()
 
 		if (buffer->getReferenceCount() == 2)        
 			buffers.remove(i);
+	}
+}
+
+void GranularSynthesisAudioProcessor::checkForPathToOpen()
+{
+	String pathToOpen;
+	swapVariables(pathToOpen, chosenPath);
+
+	if (pathToOpen.isNotEmpty())
+	{
+		const File file(pathToOpen);
+		ScopedPointer<AudioFormatReader> reader(formatManager.createReaderFor(file));
+
+		if (reader != nullptr)
+		{
+			const double duration = reader->lengthInSamples / reader->sampleRate;
+
+			if (duration < 2)
+			{
+				ReferenceCountedBuffer::Ptr newBuffer = new ReferenceCountedBuffer(file.getFileName(), reader->numChannels, reader->lengthInSamples);
+				reader->read(newBuffer->getAudioSampleBuffer(), 0, reader->lengthInSamples, 0, true, true);
+				fileBuffer = newBuffer;
+				buffers.add(newBuffer);
+			}
+			else
+			{
+				// handle the error that the file is 2 seconds or longer..
+			}
+		}
 	}
 }
 

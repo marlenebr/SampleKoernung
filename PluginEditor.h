@@ -17,7 +17,9 @@
 //==============================================================================
 /**
 */
-class GranularSynthesisAudioProcessorEditor  : public AudioProcessorEditor
+class GranularSynthesisAudioProcessorEditor  : public AudioProcessorEditor,
+											   public Thread,
+											   private Button::Listener
 {
 public:
     GranularSynthesisAudioProcessorEditor (GranularSynthesisAudioProcessor&);
@@ -27,7 +29,23 @@ public:
     void paint (Graphics&) override;
     void resized() override;
 
+	void selectSampleFile();
+
+	//void loadAudioFile(String);
+
+	//AudioFormatManager formatManager;
+
+
 	//void read(int, int,int64,bool,bool);
+
+
+	void buttonClicked(Button* button) override;
+
+	// GUI
+	TextButton openFileChooderButton;
+
+	void run() override;
+
 
 
 

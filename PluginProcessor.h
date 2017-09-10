@@ -12,6 +12,7 @@
 
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "ReferenceCountedBuffer.h"
+#include "Grain.h"
 
 
 
@@ -66,6 +67,12 @@ public:
 
 	ReferenceCountedBuffer::Ptr fileBuffer;
 
+	//Load File
+	void checkForPathToOpen();
+	String chosenPath;
+
+	
+
     //==============================================================================
     void getStateInformation (MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
@@ -75,6 +82,12 @@ public:
 	void checkForBuffersToFree();
 
 	void run() override;
+
+	//Granular
+
+	int time;
+
+	Grain grain;
 
 
 
