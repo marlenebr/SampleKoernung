@@ -317,35 +317,35 @@ void GranularSynthesisAudioProcessor::run()
 				int numSamples = fileBuffer->getAudioSampleBuffer()->getNumSamples();
 
 
-				float trans = 0.6;
+				float trans = 2;
 				trans += 1 + ((Random::getSystemRandom().nextFloat() * 2 - 1));
 
 				float ratio = pow(2.0, trans / 12.0);
 
 				// Duration
-				//float dur = (1 + (Random::getSystemRandom().nextFloat() * 2 - 1));
-				// this mapping introduces some problems check later!
-				//dur *= (1 / ratio);
+				float dur = (1 + (Random::getSystemRandom().nextFloat() * 2 - 1));
+				 //this mapping introduces some problems check later!
+				dur *= (1 / ratio);
 
 				int schedDelay = 700;
-				long long int onset = nextGrainOnset + schedDelay;
+				long long int onset = nextGrainOnset + schedDelay + OtherEffektTest;
 
 				// Length
 				float density = (1 + ( (Random::getSystemRandom().nextFloat() * 2 - 1)));
-				int length = density * dur * sampleRate;
+				int length = density * TransponseVal * sampleRate;
 
 				// Position
 				float randPosition =(Random::getSystemRandom().nextFloat() - 0.5);
-				int startPosition = (randPosition) * numSamples;
+				int startPosition = (randPosition) * numSamples ;
 				startPosition = wrap(startPosition, 0, numSamples);
 
 				// Envelope
 				float envMid = *envMidParam;
 				float envSus = *envSustainParam;
-				float envCurve = *envCurveParam;
+				float envCurve = *envCurveParam; //vorerst hier
 
 				// Amplitude
-				float amp = 0.5;
+				float amp = 0.8;
 				amp *= 1 + (Random::getSystemRandom().nextFloat() * 2 - 1);
 
 				nextGrainOnset = onset + (dur * sampleRate);

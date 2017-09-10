@@ -10,8 +10,11 @@
 
 #pragma once
 
+
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "PluginProcessor.h"
+
+
 
 
 //==============================================================================
@@ -19,7 +22,8 @@
 */
 class GranularSynthesisAudioProcessorEditor  : public AudioProcessorEditor,
 											   public Thread,
-											   private Button::Listener
+											   private Button::Listener,
+											   private Slider::Listener
 {
 public:
     GranularSynthesisAudioProcessorEditor (GranularSynthesisAudioProcessor&);
@@ -40,6 +44,13 @@ public:
 
 
 	void buttonClicked(Button* button) override;
+	void sliderValueChanged(Slider* slider) override;
+
+	void SetTransponse();
+	void SetDuration();
+	void SetPosition();
+	
+
 
 	// GUI
 	TextButton openFileChooderButton;
@@ -54,6 +65,14 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     GranularSynthesisAudioProcessor& processor;
+
+	//UI
+
+	//  Duration und transponse
+	Label durationLabel;
+	Slider durationSlider;
+	Slider transSlider;
+	Slider positionSlider;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (GranularSynthesisAudioProcessorEditor)
 };

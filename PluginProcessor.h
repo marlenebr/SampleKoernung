@@ -71,6 +71,13 @@ public:
 	void checkForPathToOpen();
 	String chosenPath;
 
+
+	//Values from UI
+	double durationVal;
+	double TransponseVal;
+	double OtherEffektTest;
+
+
 	
 
     //==============================================================================

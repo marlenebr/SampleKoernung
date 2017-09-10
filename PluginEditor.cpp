@@ -14,21 +14,57 @@
 
 //==============================================================================
 GranularSynthesisAudioProcessorEditor::GranularSynthesisAudioProcessorEditor (GranularSynthesisAudioProcessor& p)
-    : AudioProcessorEditor (&p), processor (p), Thread("DataLoadingThread")
+    : AudioProcessorEditor (&p), processor (p), Thread("DataLoadingThread"),  Button::Listener(),
+																			  Slider::Listener()
 {
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
+	// Make sure that before the constructor has finished, you've set the
+	// editor's size to whatever you need it to be.
 
 	addAndMakeVisible(openFileChooderButton);
 	openFileChooderButton.setButtonText("Open...");
 	openFileChooderButton.addListener(this);
+
+	//// Duration
+	//addAndMakeVisible(durationLabel);
+	//durationLabel.setText("Duration", dontSendNotification);
+
+	addAndMakeVisible(durationSlider);
+	durationSlider.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
+	durationSlider.setTextBoxStyle(Slider::TextBoxBelow, false, 80, 20);
+	durationSlider.setRange(0, 1000.0, 5);
+	durationSlider.addListener(this);
+
+	addAndMakeVisible(transSlider);
+	transSlider.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
+	transSlider.setTextBoxStyle(Slider::TextBoxBelow, false, 80, 20);
+	transSlider.setRange(0.0, 10.0, 0.25);
+	transSlider.addListener(this);
+
+	addAndMakeVisible(positionSlider);
+	positionSlider.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
+	positionSlider.setTextBoxStyle(Slider::TextBoxBelow, false, 80, 20);
+	positionSlider.setRange(0.0, 100.0, 1);
+	positionSlider.addListener(this);
+
+
+
+
+	processor.durationVal = durationSlider.getValue();
+	processor.TransponseVal = transSlider.getValue();
+	processor.OtherEffektTest = positionSlider.getValue();
+
+
+
+
+
+
 	//for Thread
 	//formatManager.registerBasicFormats();
 	startThread();
-	//String path = "C:\\000Daten\\eigene_samples\\2017\\08\\2sectest.wav";
-	//processor.loadAudioFile(path);
+	String path = "C:\\000Daten\\eigene_samples\\2017\\08\\2sectest.wav";
+	processor.loadAudioFile(path);
 
-    setSize (400, 300);
+	setSize(400, 300);
 
 }
 
@@ -42,10 +78,45 @@ void GranularSynthesisAudioProcessorEditor::run()
 
 }
 
+
+//Events
+
+
 void GranularSynthesisAudioProcessorEditor::buttonClicked(Button* button)
 {
 	if (button == &openFileChooderButton) selectSampleFile();
 }
+
+void GranularSynthesisAudioProcessorEditor::sliderValueChanged(Slider* slider)
+{
+	if (slider == &durationSlider)
+	{
+		SetDuration();
+	}
+	else if(slider == &transSlider)
+	{
+		SetTransponse();
+	}
+	else if (slider == &positionSlider)
+	{
+
+		processor.OtherEffektTest = positionSlider.getValue();
+	}
+}
+
+
+void GranularSynthesisAudioProcessorEditor::SetDuration()
+{
+
+	processor.durationVal = durationSlider.getValue();
+}
+
+void GranularSynthesisAudioProcessorEditor::SetTransponse()
+{
+	processor.TransponseVal = transSlider.getValue();
+
+}
+
 
 void GranularSynthesisAudioProcessorEditor::selectSampleFile()
 {
@@ -111,6 +182,11 @@ void GranularSynthesisAudioProcessorEditor::resized()
     // subcomponents in your editor..
 
 	openFileChooderButton.setBounds(10, 10, 120, 20);
+
+	//durationLabel.setBounds(10, 70, 50, 20);
+	transSlider.setBounds(40, 90, 50, 65);
+	durationSlider.setBounds(80, 90, 50, 65);
+	positionSlider.setBounds(140, 90, 50, 65);
 }
 
 //Laden Einer Vorhandenen Audiodatei
