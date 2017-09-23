@@ -11,7 +11,7 @@
 #include "Grain.h"
 
 
-Grain::Grain(int length, int startPos, int rate, float amp) : length(length), startPosition(startPos), rate(rate), amp(amp)
+Grain::Grain(int grainLength, int grainStartPoint, float r, float a) : length(grainLength), startPos(grainStartPoint), rate(r), amp(a)
 {
 
 
@@ -19,16 +19,18 @@ Grain::Grain(int length, int startPos, int rate, float amp) : length(length), st
 
 
 
-Grain::Grain() : length(1000), startPosition(0), rate(1), amp(1)
+Grain::Grain() : length(1000), startPos(4000), rate(1.0), amp(1.0)
 {
 
 }
+
+
 Grain::~Grain()
 {
 }
 
 
-void Grain::processSample(AudioSampleBuffer& currentBuffer, AudioSampleBuffer& fileBuffer, int numChannels, int blockNumSamples, int fileNumSamples, int time)
+void Grain::processSample(AudioSampleBuffer& currentBuffer, AudioSampleBuffer& fileBuffer, int numChannels, int blockNumSamples, int fileNumSamples, int time, int currentGrainTime)
 {
 
 
@@ -42,17 +44,41 @@ void Grain::processSample(AudioSampleBuffer& currentBuffer, AudioSampleBuffer& f
 
 		const int iPosition = (int)std::ceil(position);
 
-		//const float fracPos = position - iPosition;
 
-		const int readPos = iPosition + startPosition;
+		const int readPos = iPosition + startPos;
 
 		float currentSample = fileData[readPos % fileNumSamples];
 
-		currentSample = currentSample * amp;
+		currentSample = currentSample * amp * ampEnvelope(length, currentGrainTime);
 
 		channelData[time % blockNumSamples] += currentSample;
 	}
 
+}
+
+//Generating a Value between 0 and 1
+float Grain::ampEnvelope(int grainLength, int grainTime)
+{
+	float ampVal = 0.0;
+	float startEnvLen = grainLength / 4.0;
+	if (grainTime <= startEnvLen)
+	{
+		ampVal = (grainTime + 1) / startEnvLen;
+
+	}
+
+	else if (grainTime >= grainLength - startEnvLen)
+	{
+
+		ampVal = (grainLength - grainTime) / startEnvLen;
+	}
+	else if (grainTime <= grainLength && grainTime >= 0)
+	{
+		ampVal = 1.0;
+
+	}
+
+	return ampVal;
 }
 
 //float Grain::envelope(int time)
@@ -132,7 +158,7 @@ void Grain::processSampleReverse(AudioSampleBuffer& currentBuffer, AudioSampleBu
 		const float* fileData = fileBuffer.getReadPointer(channel%fileBuffer.getNumChannels());
 
 		//int position = (time - onset) + startPosition;
-		int position = time + startPosition;
+		int position = time + startPos;
 
 		channelData[blockNumSamples-(time % blockNumSamples)] = fileData[position % fileNumSamples];
 	}

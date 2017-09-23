@@ -41,9 +41,13 @@ GranularSynthesisAudioProcessor::GranularSynthesisAudioProcessor()
 	formatManager.registerBasicFormats();
 
 	time = 0;
+	timeOfGrain = 0;
 	//grain = *new Grain(88200, 44100, 0);
 	sampleRate = 44100;
-	nextGrainOnset = 88200;
+	//nextGrainOnset = 88200;
+	actualGrainLength = 441;
+	isGettingFaster = true;
+	//variatingGrainLength(sampleRate); //startLenght is one sec
 
 	//Grain grain = *new Grain(88200, 441, 0);
 	//grains.add(Grain(88200, 441, 0));
@@ -192,14 +196,20 @@ void GranularSynthesisAudioProcessor::processBlock(AudioSampleBuffer& buffer, Mi
 	const Array<Grain> localGrains = grains;
 
 
-	for (int s = 0; s < numSamplesInBlock; ++s) {
+	for (int s = 0; s < numSamplesInBlock; ++s) {  
 		for (int i = 0; i < localGrains.size(); ++i) {
-			/*if (localGrains[i].onset < time) {
-				if (time < (localGrains[i].onset + localGrains[i].length)) {*/
-					localGrains[i].processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), numSamplesInBlock, numSamplesInFile, time);
-				//}
-			//}
-		}
+			//if (localGrains[i].onset < time) {
+				if (timeOfGrain <  localGrains[i].length) {
+					localGrains[i].processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), numSamplesInBlock, numSamplesInFile, time,timeOfGrain);
+				}
+			}
+		timeOfGrain++;
+
+		//if (time%numSamplesInBlock < localGrains[0].length)
+		//{
+		//	localGrains[0].processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), numSamplesInBlock, numSamplesInFile, time);
+		//}
+
 
 
 	//for (int sample = 0; sample < outputSamplesRemaining; ++sample)
@@ -299,54 +309,107 @@ void GranularSynthesisAudioProcessor::run()
 			for (int i = grains.size() - 1; i >= 0; --i) {
 				// check if the grain has ended
 				long long int grainEnd = grains[i].length;
-				bool hasEnded = grainEnd < time;
+				bool hasEnded = grainEnd < timeOfGrain;
 
 				if (hasEnded) grains.remove(i);
 			}
 		}
 
 		// add grains
-		if (fileBuffer != nullptr) {
-				// initialize nextGrainOnset to lie in the future
-				if (nextGrainOnset == 0) nextGrainOnset = time;
+		else if (fileBuffer != nullptr) {
+			// initialize nextGrainOnset to lie in the future
+			//if (nextGrainOnset == 0) nextGrainOnset = time;
 
-				int numSamples = fileBuffer->getAudioSampleBuffer()->getNumSamples();
-
-
-				float trans = 2;
-				trans += 1 + ((Random::getSystemRandom().nextFloat() * 2 - 1));
-
-				float ratio = pow(2.0, trans / 12.0);
-
-				// Duration
+			int numSamples = fileBuffer->getAudioSampleBuffer()->getNumSamples();
 
 
-				// Length
-				float density = (1 + ( (Random::getSystemRandom().nextFloat() * 2 - 1)));
-				int length = density * sampleRate;
+			float trans = 2;
+			trans += 1 + ((Random::getSystemRandom().nextFloat() * 2 - 1));
 
-				// Position
-				float randPosition =(Random::getSystemRandom().nextFloat() - 0.5);
-				int startPosition = (randPosition) * numSamples ;
-				startPosition = wrap(startPosition, 0, numSamples);
+			float ratio = pow(2.0, trans / 12.0);
 
-				// Amplitude
-				float amp = 0.8;
-				//amp *= 1 + (Random::getSystemRandom().nextFloat() * 2 - 1);
-
-				grains.add(Grain(length, startPosition, ratio, amp));
+			// Duration
 
 
-				wait(1000);
+			// Length
+			float density = (1 + ((Random::getSystemRandom().nextFloat() * 2 - 1)));
+			int length = density * sampleRate;
+
+			// Position
+			float randPosition = (Random::getSystemRandom().nextFloat() - 0.5);
+			int startPosition = (randPosition)* numSamples;
+			startPosition = wrap(startPosition, 0, numSamples);
+
+			// Amplitude
+			float amp = 0.8;
+			//amp *= 1 + (Random::getSystemRandom().nextFloat() * 2 - 1);
+
+
+
+			
+			actualGrainLength = variatingGrainLength(actualGrainLength);
+
+			grains.add(Grain(actualGrainLength, startPosition, ratio, amp));
+			timeOfGrain = 0;
+
+			wait(441);
+
 			}
 			else 
 			{
 				// there are no held notes so we should reset the value for nextGrainOnset
-				nextGrainOnset = 0;
+				//nextGrainOnset = 0;
 				wait(100);
 			}
 	}
 }
+
+
+
+
+int GranularSynthesisAudioProcessor::variatingGrainLength(int previousLen)
+{
+
+	int newLen = previousLen;
+
+
+	//if (newLen >= sampleRate || newLen <100)
+	//	isGettingFaster =!isGettingFaster;
+
+	//
+
+	//if (isGettingFaster)
+	//{
+	//	newLen *= 2;
+	//}
+	//else
+	//{
+	//	newLen /= 2;
+	//}
+
+	if (newLen >= sampleRate)
+		isGettingFaster = false;
+
+
+	else if (newLen <441)
+		isGettingFaster = true;
+
+
+	if (isGettingFaster)
+	{
+		newLen += 441;
+	}
+	else
+	{
+		newLen -= 441;
+	}
+
+
+	return newLen;
+
+
+}
+
 
 int GranularSynthesisAudioProcessor::wrap(int val, const int low, const int high)
 {

@@ -88,6 +88,8 @@ public:
 
 	void checkForBuffersToFree();
 
+	int variatingGrainLength(int);
+
 	void run() override;
 
 	int wrap(int, const int, const int);
@@ -100,8 +102,13 @@ public:
 	//Granular
 
 	int time;
+	int timeOfGrain;
 	double sampleRate;
-	long long int nextGrainOnset;
+	int actualGrainLength;
+
+	bool isGettingFaster;
+
+	//long long int nextGrainOnset;
 
 
 

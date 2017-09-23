@@ -20,7 +20,7 @@ class Grain
 public:
 
 	//Grain(long long int, int, int, float, float, float, float, float);
-	Grain(int, int, int, float);
+	Grain(int, int, float, float);
 
 	Grain();
 
@@ -28,16 +28,14 @@ public:
 
 
 	const int length;
-	const int startPosition;
-
-
+    const int startPos;
 	const float rate;
 	const float amp;
 
-
+	float ampEnvelope(int, int);
 	inline float cubicinterp(float, float, float, float, float);
 
-	void processSample(AudioSampleBuffer&, AudioSampleBuffer&, int, int, int, int);
+	void processSample(AudioSampleBuffer&, AudioSampleBuffer&, int, int, int, int,int);
 	void processSampleReverse(AudioSampleBuffer&, AudioSampleBuffer&, int, int, int, int);
 	
 
