@@ -162,7 +162,7 @@ bool GranularSynthesisAudioProcessor::isBusesLayoutSupported (const BusesLayout&
 #endif
 
 
-//Buffer hat alle Channels und ist input welche für den output überschrieben wwird
+//Buffer hat alle Channels und ist input welche fÃ¼r den output Ã¼berschrieben wwird
 void GranularSynthesisAudioProcessor::processBlock(AudioSampleBuffer& buffer, MidiBuffer& midiMessages)
 {
 	const int totalNumInputChannels = getTotalNumInputChannels();
@@ -194,11 +194,11 @@ void GranularSynthesisAudioProcessor::processBlock(AudioSampleBuffer& buffer, Mi
 
 	for (int s = 0; s < numSamplesInBlock; ++s) {
 		for (int i = 0; i < localGrains.size(); ++i) {
-			if (localGrains[i].onset < time) {
-				if (time < (localGrains[i].onset + localGrains[i].length)) {
+			/*if (localGrains[i].onset < time) {
+				if (time < (localGrains[i].onset + localGrains[i].length)) {*/
 					localGrains[i].processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), numSamplesInBlock, numSamplesInFile, time);
-				}
-			}
+				//}
+			//}
 		}
 
 
@@ -283,10 +283,6 @@ void GranularSynthesisAudioProcessor::loadAudioFile(String path)
 	}
 
 
-	//std::cout << "samples in buffer: " << newBuffer->getAudioSampleBuffer()->getNumSamples() << std::endl;
-	//fileBuffer = newBuffer;
-
-
 }
 
 //Update
@@ -302,7 +298,7 @@ void GranularSynthesisAudioProcessor::run()
 		if (grains.size() > 0) {
 			for (int i = grains.size() - 1; i >= 0; --i) {
 				// check if the grain has ended
-				long long int grainEnd = grains[i].onset + grains[i].length;
+				long long int grainEnd = grains[i].length;
 				bool hasEnded = grainEnd < time;
 
 				if (hasEnded) grains.remove(i);
@@ -323,39 +319,25 @@ void GranularSynthesisAudioProcessor::run()
 				float ratio = pow(2.0, trans / 12.0);
 
 				// Duration
-				float dur = (1 + (Random::getSystemRandom().nextFloat() * 2 - 1));
-				 //this mapping introduces some problems check later!
-				dur *= (1 / ratio);
 
-				int schedDelay = 700;
-				long long int onset = nextGrainOnset + schedDelay + OtherEffektTest;
 
 				// Length
 				float density = (1 + ( (Random::getSystemRandom().nextFloat() * 2 - 1)));
-				int length = density * TransponseVal * sampleRate;
+				int length = density * sampleRate;
 
 				// Position
 				float randPosition =(Random::getSystemRandom().nextFloat() - 0.5);
 				int startPosition = (randPosition) * numSamples ;
 				startPosition = wrap(startPosition, 0, numSamples);
 
-				// Envelope
-				float envMid = *envMidParam;
-				float envSus = *envSustainParam;
-				float envCurve = *envCurveParam; //vorerst hier
-
 				// Amplitude
 				float amp = 0.8;
-				amp *= 1 + (Random::getSystemRandom().nextFloat() * 2 - 1);
+				//amp *= 1 + (Random::getSystemRandom().nextFloat() * 2 - 1);
 
-				nextGrainOnset = onset + (dur * sampleRate);
+				grains.add(Grain(length, startPosition, ratio, amp));
 
-				grains.add(Grain(onset, length, startPosition, envMid, envSus, envCurve, ratio, amp));
 
-				double schedError = ((onset - schedDelay) - time) / sampleRate;
-				dur += schedError;
-
-				wait(dur * 1000);
+				wait(1000);
 			}
 			else 
 			{
