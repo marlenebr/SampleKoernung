@@ -73,9 +73,9 @@ public:
 
 
 	//Values from UI
-	double durationVal;
-	double TransponseVal;
-	double OtherEffektTest;
+	double additionalLength;
+	double transponseVal;
+	double additionalPosTranslate;
 
 
 	

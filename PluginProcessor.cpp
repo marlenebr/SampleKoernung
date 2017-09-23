@@ -45,7 +45,7 @@ GranularSynthesisAudioProcessor::GranularSynthesisAudioProcessor()
 	//grain = *new Grain(88200, 44100, 0);
 	sampleRate = 44100;
 	//nextGrainOnset = 88200;
-	actualGrainLength = 441;
+	actualGrainLength = 441 * additionalLength;
 	isGettingFaster = true;
 	//variatingGrainLength(sampleRate); //startLenght is one sec
 
@@ -299,7 +299,7 @@ void GranularSynthesisAudioProcessor::run()
 
 
 			float trans = 2;
-			trans += 1 + ((Random::getSystemRandom().nextFloat() * 2 - 1));
+			trans += 1 + ((Random::getSystemRandom().nextFloat() * 2 - 1)) + transponseVal;
 
 			float ratio = pow(2.0, trans / 12.0);
 
@@ -308,12 +308,14 @@ void GranularSynthesisAudioProcessor::run()
 
 			// Length
 			float density = (1 + ((Random::getSystemRandom().nextFloat() * 2 - 1)));
-			int length = density * sampleRate;
+			int length = density * sampleRate * additionalLength;
 
 			// Position
-			float randPosition = (Random::getSystemRandom().nextFloat() - 0.5);
-			int startPosition = (randPosition)* numSamples;
-			startPosition = wrap(startPosition, 0, numSamples);
+			float randPosition = (Random::getSystemRandom().nextFloat());
+			int startPosition = (randPosition + additionalPosTranslate *sampleRate)* numSamples;
+			startPosition = wrap(startPosition * sampleRate , 0, numSamples);
+
+		   // startPosition += additionalPosTranslate *100;
 
 			// Amplitude
 			float amp = 0.8;
@@ -322,12 +324,12 @@ void GranularSynthesisAudioProcessor::run()
 
 
 			
-			actualGrainLength = variatingGrainLength(actualGrainLength);
+			actualGrainLength = variatingGrainLength(actualGrainLength + additionalLength * sampleRate);
 
-			grains.add(Grain(length, startPosition, ratio, amp));
+			grains.add(Grain(actualGrainLength, startPosition, ratio, amp));
 			timeOfGrain = 0;
 
-			wait(441);
+			wait(441 * additionalLength);
 
 			}
 			else 

@@ -25,33 +25,39 @@ GranularSynthesisAudioProcessorEditor::GranularSynthesisAudioProcessorEditor (Gr
 	openFileChooderButton.addListener(this);
 
 	//// Duration
-	//addAndMakeVisible(durationLabel);
-	//durationLabel.setText("Duration", dontSendNotification);
+	addAndMakeVisible(lengthLabel);
+	lengthLabel.setText("Length", dontSendNotification);
 
-	addAndMakeVisible(durationSlider);
-	durationSlider.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
-	durationSlider.setTextBoxStyle(Slider::TextBoxBelow, false, 80, 20);
-	durationSlider.setRange(0, 1000.0, 5);
-	durationSlider.addListener(this);
+	addAndMakeVisible(transponseLabel);
+	transponseLabel.setText("Transponse", dontSendNotification);
+
+	addAndMakeVisible(positionLabel);
+	positionLabel.setText("Start Pos", dontSendNotification);
+
+	addAndMakeVisible(lengthSlider);
+	lengthSlider.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
+	lengthSlider.setTextBoxStyle(Slider::TextBoxBelow, false, 80, 20);
+	lengthSlider.setRange(0.5, 1.5, 0.05);
+	lengthSlider.addListener(this);
 
 	addAndMakeVisible(transSlider);
 	transSlider.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
 	transSlider.setTextBoxStyle(Slider::TextBoxBelow, false, 80, 20);
-	transSlider.setRange(0.0, 10.0, 0.25);
+	transSlider.setRange(-50.0, 25.0, 1);
 	transSlider.addListener(this);
 
 	addAndMakeVisible(positionSlider);
 	positionSlider.setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
 	positionSlider.setTextBoxStyle(Slider::TextBoxBelow, false, 80, 20);
-	positionSlider.setRange(0.0, 100.0, 1);
+	positionSlider.setRange(0.0, 4, 0.1);
 	positionSlider.addListener(this);
 
 
 
 
-	processor.durationVal = durationSlider.getValue();
-	processor.TransponseVal = transSlider.getValue();
-	processor.OtherEffektTest = positionSlider.getValue();
+	processor.additionalLength = lengthSlider.getValue();
+	processor.transponseVal = transSlider.getValue();
+	processor.additionalPosTranslate = positionSlider.getValue();
 
 
 
@@ -89,7 +95,7 @@ void GranularSynthesisAudioProcessorEditor::buttonClicked(Button* button)
 
 void GranularSynthesisAudioProcessorEditor::sliderValueChanged(Slider* slider)
 {
-	if (slider == &durationSlider)
+	if (slider == &lengthSlider)
 	{
 		SetDuration();
 	}
@@ -100,7 +106,7 @@ void GranularSynthesisAudioProcessorEditor::sliderValueChanged(Slider* slider)
 	else if (slider == &positionSlider)
 	{
 
-		processor.OtherEffektTest = positionSlider.getValue();
+		processor.additionalPosTranslate = positionSlider.getValue();
 	}
 }
 
@@ -108,12 +114,12 @@ void GranularSynthesisAudioProcessorEditor::sliderValueChanged(Slider* slider)
 void GranularSynthesisAudioProcessorEditor::SetDuration()
 {
 
-	processor.durationVal = durationSlider.getValue();
+	processor.additionalLength = lengthSlider.getValue();
 }
 
 void GranularSynthesisAudioProcessorEditor::SetTransponse()
 {
-	processor.TransponseVal = transSlider.getValue();
+	processor.transponseVal = transSlider.getValue();
 
 }
 
@@ -173,7 +179,7 @@ void GranularSynthesisAudioProcessorEditor::paint (Graphics& g)
 
     g.setColour (Colours::white);
     g.setFont (15.0f);
-    g.drawFittedText ("Hello World!", getLocalBounds(), Justification::centred, 1);
+    //g.drawFittedText ("Hello World!", getLocalBounds(), Justification::centred, 1);
 }
 
 void GranularSynthesisAudioProcessorEditor::resized()
@@ -183,9 +189,12 @@ void GranularSynthesisAudioProcessorEditor::resized()
 
 	openFileChooderButton.setBounds(10, 10, 120, 20);
 
-	//durationLabel.setBounds(10, 70, 50, 20);
+	transponseLabel.setBounds(10, 70, 50, 20);
+	lengthLabel.setBounds(60, 70, 50, 20);
+	positionLabel.setBounds(140, 70, 50, 20);
+
 	transSlider.setBounds(40, 90, 50, 65);
-	durationSlider.setBounds(80, 90, 50, 65);
+	lengthSlider.setBounds(80, 90, 50, 65);
 	positionSlider.setBounds(140, 90, 50, 65);
 }
 

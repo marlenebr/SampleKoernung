@@ -94,8 +94,6 @@ void Grain::processSampleForGrainCombine(AudioSampleBuffer& currentBuffer, Audio
 		if (currentGrainTime > length / 2)
 			 currentSample2 = fileData[readPos2 % fileNumSamples] / 3 * amp * ampEnvelope(length, currentGrainTime *1.5);
 
-		//currentSample = currentSample * amp * ampEnvelope(length, currentGrainTime *1.5);
-
 		currentSample3 = fileData[readPos3 % fileNumSamples] / 3 * amp * ampEnvelope(length, currentGrainTime/2);
 
 

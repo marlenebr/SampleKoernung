@@ -68,9 +68,13 @@ private:
 
 	//UI
 
-	//  Duration und transponse
-	Label durationLabel;
-	Slider durationSlider;
+	//Duration und transponse and pos
+	Label lengthLabel;
+	Label transponseLabel;
+	Label positionLabel;
+
+
+	Slider lengthSlider;
 	Slider transSlider;
 	Slider positionSlider;
 
