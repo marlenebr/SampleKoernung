@@ -68,24 +68,38 @@ void Grain::processSampleForGrainCombine(AudioSampleBuffer& currentBuffer, Audio
 
 		const float position = time * rate;
 		const float position2 = time * rate *1.9;
+		const float position3 = time * rate *2.6;
+
 
 		const int iPosition = (int)std::ceil(position);
 		const int iPosition2 = (int)std::ceil(position2);
+		const int iPosition3 = (int)std::ceil(position3);
+
 
 
 		const int readPos = iPosition + startPos;
 		const int readPos2 = iPosition2 + startPos;
+		const int readPos3 = iPosition3 + startPos;
 
-		float currentSample;
 
-		if (currentGrainTime < length / 2)
-			 currentSample = fileData[readPos % fileNumSamples]/2;
-		else
-			 currentSample = fileData[readPos % fileNumSamples]/2 + fileData[readPos2 % fileNumSamples] / 2;
+		float currentSample1;
+		float currentSample2 = 0.0;
+		float currentSample3 = 0.0;
 
-		currentSample = currentSample * amp * ampEnvelope(length, currentGrainTime *1.5);
 
-		channelData[time % blockNumSamples] += currentSample;
+
+
+		currentSample1 = fileData[readPos % fileNumSamples]/3 * amp * ampEnvelope(length, currentGrainTime);
+
+		if (currentGrainTime > length / 2)
+			 currentSample2 = fileData[readPos2 % fileNumSamples] / 3 * amp * ampEnvelope(length, currentGrainTime *1.5);
+
+		//currentSample = currentSample * amp * ampEnvelope(length, currentGrainTime *1.5);
+
+		currentSample3 = fileData[readPos3 % fileNumSamples] / 3 * amp * ampEnvelope(length, currentGrainTime/2);
+
+
+		channelData[time % blockNumSamples] += currentSample1 + currentSample2 +currentSample3;
 	}
 
 }
