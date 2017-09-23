@@ -198,45 +198,20 @@ void GranularSynthesisAudioProcessor::processBlock(AudioSampleBuffer& buffer, Mi
 
 	for (int s = 0; s < numSamplesInBlock; ++s) {  
 		for (int i = 0; i < localGrains.size(); ++i) {
-			//if (localGrains[i].onset < time) {
-				if (timeOfGrain <  localGrains[i].length) {
-					localGrains[i].processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), numSamplesInBlock, numSamplesInFile, time,timeOfGrain);
+				if (timeOfGrain <  localGrains[i].length *2) {
+					//localGrains[i].processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), numSamplesInBlock, numSamplesInFile, time,timeOfGrain);
+					//overlap another grain
+					localGrains[i].processSampleForGrainCombine(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), numSamplesInBlock, numSamplesInFile, time, timeOfGrain);
+
 				}
+
+
 			}
 		timeOfGrain++;
-
-		//if (time%numSamplesInBlock < localGrains[0].length)
-		//{
-		//	localGrains[0].processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), numSamplesInBlock, numSamplesInFile, time);
-		//}
-
-
-
-	//for (int sample = 0; sample < outputSamplesRemaining; ++sample)
-	//{
-	//	//grain.processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), outputSamplesRemaining, numSamplesInFile, time);
-	//	for (int i = 0; i < localGrains.size(); ++i) {
-	//		if (localGrains[i].onset < time) {
-	//			if (time < (localGrains[i].onset + localGrains[i].length)) {
-	//				localGrains[i].processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), outputSamplesRemaining, numSamplesInFile, time);
-	//			}
-	//		}
-	//	}
 		++time;
 	}
 
-	//outputSamplesRemaining -= samplesThisTime;  //0 ausser am ende, dann weniger (den kehrwehrt von outputsampleoffset
-	//outputSamplesOffset += samplesThisTime; //442 ausser am ende einmal, dann weniger
-	//position += samplesThisTime; //pos + 442 
 
-	//if (position == currentAudioSampleBuffer->getNumSamples()) //dann ist das ende erreicht
-	//	position = 0;
- //  
-
-	//retainedCurrentBuffer->position = position; //wiedr auf pos 0 setzen, anfang
-
-
-        // ..do something to the data...
     
 }
 
@@ -349,7 +324,7 @@ void GranularSynthesisAudioProcessor::run()
 			
 			actualGrainLength = variatingGrainLength(actualGrainLength);
 
-			grains.add(Grain(actualGrainLength, startPosition, ratio, amp));
+			grains.add(Grain(length, startPosition, ratio, amp));
 			timeOfGrain = 0;
 
 			wait(441);
@@ -364,28 +339,18 @@ void GranularSynthesisAudioProcessor::run()
 	}
 }
 
-
-
+//
+//Grain GranularSynthesisAudioProcessor::TranslatedGrain(Grain gr)
+//{
+//	Grain tGrain = Grain(gr.length * 2, gr.startPos, gr.rate * 1.5, gr.amp);
+//	return tGrain;
+//}
 
 int GranularSynthesisAudioProcessor::variatingGrainLength(int previousLen)
 {
 
 	int newLen = previousLen;
 
-
-	//if (newLen >= sampleRate || newLen <100)
-	//	isGettingFaster =!isGettingFaster;
-
-	//
-
-	//if (isGettingFaster)
-	//{
-	//	newLen *= 2;
-	//}
-	//else
-	//{
-	//	newLen /= 2;
-	//}
 
 	if (newLen >= sampleRate)
 		isGettingFaster = false;

@@ -27,15 +27,16 @@ public:
 	~Grain();
 
 
-	const int length;
+    int length;
     const int startPos;
-	const float rate;
+    const float rate;
 	const float amp;
 
 	float ampEnvelope(int, int);
 	inline float cubicinterp(float, float, float, float, float);
 
 	void processSample(AudioSampleBuffer&, AudioSampleBuffer&, int, int, int, int,int);
+	void processSampleForGrainCombine(AudioSampleBuffer&, AudioSampleBuffer&, int, int, int, int, int);
 	void processSampleReverse(AudioSampleBuffer&, AudioSampleBuffer&, int, int, int, int);
 	
 

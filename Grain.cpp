@@ -56,6 +56,41 @@ void Grain::processSample(AudioSampleBuffer& currentBuffer, AudioSampleBuffer& f
 
 }
 
+void Grain::processSampleForGrainCombine(AudioSampleBuffer& currentBuffer, AudioSampleBuffer& fileBuffer, int numChannels, int blockNumSamples, int fileNumSamples, int time, int currentGrainTime)
+{
+	length = length *1.5;
+
+	for (int channel = 0; channel < numChannels; ++channel) {
+		//const float gain = envelope(time);
+
+		float* channelData = currentBuffer.getWritePointer(channel);
+		const float* fileData = fileBuffer.getReadPointer(channel%fileBuffer.getNumChannels());
+
+		const float position = time * rate;
+		const float position2 = time * rate *1.9;
+
+		const int iPosition = (int)std::ceil(position);
+		const int iPosition2 = (int)std::ceil(position2);
+
+
+		const int readPos = iPosition + startPos;
+		const int readPos2 = iPosition2 + startPos;
+
+		float currentSample;
+
+		if (currentGrainTime < length / 2)
+			 currentSample = fileData[readPos % fileNumSamples]/2;
+		else
+			 currentSample = fileData[readPos % fileNumSamples]/2 + fileData[readPos2 % fileNumSamples] / 2;
+
+		currentSample = currentSample * amp * ampEnvelope(length, currentGrainTime *1.5);
+
+		channelData[time % blockNumSamples] += currentSample;
+	}
+
+}
+
+
 //Generating a Value between 0 and 1
 float Grain::ampEnvelope(int grainLength, int grainTime)
 {
