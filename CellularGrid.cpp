@@ -44,7 +44,7 @@ bool CellularGrid::getAliveNeighbours(int row, int col)
 			gridData[row - 1, col + 1]},
 		{
 			gridData[row,     col - 1],
-			gridData[row,     col], //middle, should be true
+			gridData[row,     col], //middle
 			gridData[row,     col + 1],
 		},
 		{
@@ -54,13 +54,7 @@ bool CellularGrid::getAliveNeighbours(int row, int col)
 		}
 	};
 
+	return neighbours;
+
 }
 
-//int CellularGrid::getCellIndex(int row, int col)
-//{
-//	row = rows%row;
-//	col = columns%col;
-//
-//	int result = (row * columns) + col;
-//	return result;
-//}

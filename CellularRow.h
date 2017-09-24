@@ -2,43 +2,40 @@
   ==============================================================================
 
     CellularRow.h
-    Created: 24 Sep 2017 1:31:40am
+    Created: 24 Sep 2017 11:30:56pm
     Author:  marle
 
   ==============================================================================
 */
 
-
 #pragma once
 #include "../JuceLibraryCode/JuceHeader.h"
-#ifndef CELLULARGRID_H_INCLUDED
-#define CELLULARGRID_H_INCLUDED
+#ifndef CELLULARROW_H_INCLUDED
+#define CELLULARROW_H_INCLUDED
 
 
-class CellularGrid
+class CellularRow
 {
 
 public:
 
-	CellularGrid(int,int);
+	CellularRow(int);
 
-	CellularGrid();
+	CellularRow();
 
-	~CellularGrid();
-
-
-	int rows;
-	int columns;
+	~CellularRow();
 
 
-	Array<bool> gridData;
+	int cellCount;
+
+
+	Array<bool> rowData;
 
 	bool cellState;
 
-	bool getCell(int, int);
-	int getCellIndex(int, int);
-	bool getAliveNeighbours(int row, int col);
-	void processGrid(AudioSampleBuffer&, AudioSampleBuffer&, int, int, int, int, int);
+	bool getCell(int);
+	bool getAliveNeighbours(int row);
+	void processRow(AudioSampleBuffer&, AudioSampleBuffer&, int, int, int, int, int);
 
 
 
