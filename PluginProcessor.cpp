@@ -45,8 +45,19 @@ GranularSynthesisAudioProcessor::GranularSynthesisAudioProcessor()
 	//grain = *new Grain(88200, 44100, 0);
 	sampleRate = 44100;
 	//nextGrainOnset = 88200;
+	additionalLength = 1;
 	actualGrainLength = 441 * additionalLength;
+	//actualStaticGrainLength = 441 * additionalLength;
+	grainCounter = 1;
+
+	cellularLength = 441 * additionalLength;
 	isGettingFaster = true;
+
+	//First Cellular Row
+	bool initialisationRow[] = { true,true,false,true,false,true,false,true,true,true,false,false,true,true,true,false};
+	//cellRows.add(CellularRow(initialisationRow));
+	cellRow = CellularRow(initialisationRow, cellularLength,1.0);
+
 	//variatingGrainLength(sampleRate); //startLenght is one sec
 
 	//Grain grain = *new Grain(88200, 441, 0);
@@ -172,13 +183,6 @@ void GranularSynthesisAudioProcessor::processBlock(AudioSampleBuffer& buffer, Mi
 	const int totalNumInputChannels = getTotalNumInputChannels();
 	const int totalNumOutputChannels = getTotalNumOutputChannels();
 
-	// In case we have more outputs than inputs, this code clears any output
-	// channels that didn't contain input data, (because these aren't
-	// guaranteed to be empty - they may contain garbage).
-	// This is here to avoid people getting screaming feedback
-	// when they first compile a plugin, but obviously you don't need to keep
-	// this code if your algorithm always overwrites all the output channels.
-
 	const int numSamplesInBlock = buffer.getNumSamples();
 
 	// clear the buffer so we don't get any noise
@@ -193,20 +197,36 @@ void GranularSynthesisAudioProcessor::processBlock(AudioSampleBuffer& buffer, Mi
 	AudioSampleBuffer* currentAudioSampleBuffer(retainedCurrentBuffer->getAudioSampleBuffer());
 	const int numSamplesInFile = currentAudioSampleBuffer->getNumSamples();
 
-	const Array<Grain> localGrains = grains;
+   //const Array<Grain> localGrains = grains;
 
 
-	for (int s = 0; s < numSamplesInBlock; ++s) {  
-		for (int i = 0; i < localGrains.size(); ++i) {
-				if (timeOfGrain <  localGrains[i].length *2) {
-					//localGrains[i].processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), numSamplesInBlock, numSamplesInFile, time,timeOfGrain);
-					//overlap another grain
-					localGrains[i].processSampleForGrainCombine(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), numSamplesInBlock, numSamplesInFile, time, timeOfGrain);
+	//for (int s = 0; s < numSamplesInBlock; ++s) {  
+	//	for (int i = 0; i < localGrains.size(); ++i) {
+	//			if (timeOfGrain <  localGrains[i].length *2) {
 
-				}
+	//				//localGrains[i].processSample(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), numSamplesInBlock, numSamplesInFile, time,timeOfGrain);
+	//				//overlap another grain
 
 
-			}
+	//				/*
+	//				current Buffer will be used  to calculate one Sample where grains will be added.
+	//				in this Function: Reding the Buffer, set the positions  of sample for each grain that will be combined (where to read in  the buffer)
+	//				For Transponse a later sample get read from the buffer. Skipping some samples makes the effect
+	//				*/
+	//				localGrains[i].processSampleForGrainCombine(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), numSamplesInBlock, numSamplesInFile, time, timeOfGrain);
+
+	//			}
+
+	//		}
+	//	timeOfGrain++;
+	//	++time;
+	//}
+
+	for (int s = 0; s < numSamplesInBlock; ++s) {
+
+
+				cellRow.processRow(buffer, *currentAudioSampleBuffer, buffer.getNumChannels(), numSamplesInBlock, time);
+
 		timeOfGrain++;
 		++time;
 	}
@@ -214,6 +234,7 @@ void GranularSynthesisAudioProcessor::processBlock(AudioSampleBuffer& buffer, Mi
 
     
 }
+
 
 //==============================================================================
 bool GranularSynthesisAudioProcessor::hasEditor() const
@@ -284,16 +305,19 @@ void GranularSynthesisAudioProcessor::run()
 			for (int i = grains.size() - 1; i >= 0; --i) {
 				// check if the grain has ended
 				long long int grainEnd = grains[i].length;
+
 				bool hasEnded = grainEnd < timeOfGrain;
 
-				if (hasEnded) grains.remove(i);
+				if (hasEnded)
+				{
+					grains.remove(i);
+				}
+				
 			}
 		}
 
-		// add grains
 		else if (fileBuffer != nullptr) {
-			// initialize nextGrainOnset to lie in the future
-			//if (nextGrainOnset == 0) nextGrainOnset = time;
+
 
 			int numSamples = fileBuffer->getAudioSampleBuffer()->getNumSamples();
 
@@ -319,17 +343,34 @@ void GranularSynthesisAudioProcessor::run()
 
 			// Amplitude
 			float amp = 0.8;
-			//amp *= 1 + (Random::getSystemRandom().nextFloat() * 2 - 1);
 
 
 
 			
 			actualGrainLength = variatingGrainLength(actualGrainLength + additionalLength * sampleRate);
+			//cellularLength = cellularLength + additionalLength;
+
 
 			grains.add(Grain(actualGrainLength, startPosition, ratio, amp));
-			timeOfGrain = 0;
 
-			wait(441 * additionalLength);
+			//long long int autonomaGrainEnd = actualStaticGrainLength;
+			bool rowHasEnded = false;
+			if (time > cellRow.lengthInSamples * grainCounter)
+			{
+				rowHasEnded = true;
+			}
+
+			if (rowHasEnded)
+			{
+
+				bool* nextRow = cellRow.getNextRow();
+				cellRow = CellularRow(nextRow, 4410, ratio);
+				grainCounter++;
+				rowHasEnded = false;
+			}
+
+
+			wait(100);
 
 			}
 			else 

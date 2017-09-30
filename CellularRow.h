@@ -19,7 +19,8 @@ class CellularRow
 
 public:
 
-	CellularRow(int);
+	CellularRow(int,int, float);
+	CellularRow(bool[],int, float);
 
 	CellularRow();
 
@@ -27,15 +28,20 @@ public:
 
 
 	int cellCount;
+	int lengthInSamples;
+	float rate;
 
 
-	Array<bool> rowData;
+	bool* rowData;
+
+	bool* getNextRow();
 
 	bool cellState;
 
 	bool getCell(int);
-	bool getAliveNeighbours(int row);
-	void processRow(AudioSampleBuffer&, AudioSampleBuffer&, int, int, int, int, int);
+	bool getRuleValue(bool[]);
+	bool* getAliveNeighbours(int row);
+	void processRow(AudioSampleBuffer&, AudioSampleBuffer&, int, int, int);
 
 
 

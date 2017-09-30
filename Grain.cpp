@@ -70,7 +70,7 @@ void Grain::processSampleForGrainCombine(AudioSampleBuffer& currentBuffer, Audio
 		const float position2 = time * rate *1.9;
 		const float position3 = time * rate *2.6;
 
-
+		//ceil = runden
 		const int iPosition = (int)std::ceil(position);
 		const int iPosition2 = (int)std::ceil(position2);
 		const int iPosition3 = (int)std::ceil(position3);

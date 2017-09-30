@@ -13,6 +13,8 @@
 #include "../JuceLibraryCode/JuceHeader.h"
 #include "ReferenceCountedBuffer.h"
 #include "Grain.h"
+#include "CellularRow.h"
+
 
 
 
@@ -103,8 +105,12 @@ public:
 
 	int time;
 	int timeOfGrain;
+	int grainCounter;
 	double sampleRate;
 	int actualGrainLength;
+	int actualStaticGrainLength;
+
+	int cellularLength;
 
 	bool isGettingFaster;
 
@@ -115,8 +121,10 @@ public:
 	//Array<Grain> grainStack;
 	//Grain grain;
 	Array<Grain> grains;
+	Array<CellularRow> cellRows;
 
 
+	CellularRow cellRow;
 
 
 
